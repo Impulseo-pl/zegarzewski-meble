@@ -1668,3 +1668,88 @@ footer{view-transition-name:mt-foot}
 
 /* zegarzewski: cien leadu */
 .hero-cine .lead{text-shadow:0 1px 14px rgba(0,0,0,.6),0 0 2px rgba(0,0,0,.35)}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KURTYNA Z LOGO (ekran powitalny) — TYLKO strona glowna, raz na wizyte.
+   `?intro` w adresie = zagraj jeszcze raz (do pokazywania klientowi).
+   Bezpieczniki: zaslona domyslnie `display:none` (wlacza ja skrypt) · twarde
+   timery 1,9 s / 3 s · klik-scroll-dotyk-klawisz przerywa · reduced-motion pomija.
+   Wzorzec: STOLMAR (skill wejscie-na-strone).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Fade hero (`heroFade`) gralby POD zaslona i konczyl sie juz po odslonie.
+   Klasa jest TRWALA: zdjecie jej razem z `intro-on` pusciloby animacje drugi raz. */
+.bez-wejscia-tla .hero-cine>img{animation:none}
+
+#intro{display:none}
+.intro-on #intro{
+  display:block;position:fixed;inset:0;z-index:300;background:var(--paper);
+  transform:translateY(0);
+}
+/* Cien pod krawedzia — bez niego jasna plachta nie ma widocznej krawedzi. */
+.intro-on #intro::after{
+  content:"";position:absolute;left:0;right:0;top:100%;height:56px;
+  background:linear-gradient(to bottom,rgba(45,27,25,.10),rgba(45,27,25,0));
+}
+/* Kurtyna jedzie W GORE, ZA logo, z 0,1 s opoznienia i wolnym startem.
+   Logo jest tu pionowe (znak nad napisem), wiec wyzsze niz u STOLMARA: przy
+   kurtynie w dol jego dolna czesc jechala do 90 px po ciemnym zdjeciu
+   (policzone i widoczne na stopklatce). W gore krawedz goni logo i go nie
+   dogania — znak caly czas jest na jasnym tle, az siada w pasku. */
+.intro-on.intro-out #intro{transform:translateY(-100%);pointer-events:none;
+  transition:transform .72s cubic-bezier(.66,0,.24,1) .1s}
+.intro-on body{overflow:hidden}
+
+/* Drugi takt ruchu: kreska w kolorze akcentu (jak uchwyt szuflady z logo). */
+.i-kreska{
+  position:absolute;left:50%;top:50%;width:calc(var(--i-w,180px) * .34);height:2px;
+  background:var(--accent);transform-origin:center;opacity:0;
+  transform:translate(-50%,calc(var(--i-h,64px) / 2 + 24px)) scaleX(0);
+}
+.intro-on.intro-gra .i-kreska{
+  opacity:1;transform:translate(-50%,calc(var(--i-h,64px) / 2 + 24px)) scaleX(1);
+  transition:transform .46s cubic-bezier(.16,1,.3,1) .14s,opacity .18s linear .14s;
+}
+.intro-on.intro-out .i-kreska{opacity:0;transition:opacity .22s linear}
+
+/* Pasek nad zaslona, widac z niego tylko logo. `intro-znak` dokłada skrypt
+   DOPIERO po zmierzeniu logo w jego naturalnym miejscu.
+   🔴 iOS: na czas wejscia pasek BEZ backdrop-filter (WebKit rysuje warstwe
+   rozmycia NAD lecacym logo) i logo w zadnym stanie bez drop-shadow. */
+.intro-znak .nav{z-index:301;-webkit-backdrop-filter:none;backdrop-filter:none}
+.intro-znak:not(.intro-out) .nav{border-bottom-color:transparent}
+.intro-znak .nav-links,.intro-znak .nav-toggle{opacity:0}
+.intro-znak.intro-out .nav-links,.intro-znak.intro-out .nav-toggle{opacity:1;transition:opacity .5s var(--ease) .3s}
+
+/* ⛔ ZERO zwyklego opacity+scale na logo: maska (clip-path) + rozmycie do ostrosci.
+   Lista filtrow w kazdym stanie ta sama (samo blur), bez drop-shadow. */
+.intro-znak .brand{width:var(--i-baza-w);height:var(--i-baza-h);flex:0 0 auto;justify-content:flex-end}
+.intro-znak .brand-logo{
+  position:absolute;left:var(--i-cx);top:var(--i-cy);
+  width:var(--i-w);height:var(--i-h);max-width:none;
+  transform:translate(-50%,-50%) scale(1.045);
+  clip-path:inset(0 100% 0 0);
+  filter:blur(14px);
+}
+.intro-znak.intro-gra .brand-logo{
+  transform:translate(-50%,-50%) scale(1);
+  clip-path:inset(0 0 0 0);
+  filter:blur(0px);
+  transition:transform .5s cubic-bezier(.16,1,.3,1),clip-path .5s cubic-bezier(.16,1,.3,1),
+             filter .5s cubic-bezier(.16,1,.3,1);
+}
+/* Powrot do paska: ZAWSZE pomniejszenie (scale < 1) — powiekszanie rozmywa znak na telefonie. */
+.intro-znak.intro-out .brand-logo{
+  transform:translate(calc(-50% + var(--i-px)),calc(-50% + var(--i-py))) scale(var(--i-zmniejsz));
+  filter:blur(0px);
+  transition:transform .72s cubic-bezier(.16,.84,.44,1);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .intro-on #intro{display:none}
+  .intro-on body{overflow:auto}
+  .intro-znak .brand-logo{position:static;width:auto;height:auto;transform:none!important;
+    filter:none!important;clip-path:none!important}
+  .intro-znak .nav-links,.intro-znak .nav-toggle{opacity:1}
+}

@@ -726,10 +726,21 @@
   safe('brand', function () {
     var bm = document.querySelector('.hero-cine .brandmark');
     if (!bm || reduce) return;
-    document.documentElement.classList.add('bm-on');
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () { bm.classList.add('bm-in'); });
-    });
+    var html = document.documentElement;
+    html.classList.add('bm-on');
+    var wejdz = function () {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { bm.classList.add('bm-in'); });
+      });
+    };
+    // Kurtyna z logo (tylko strona główna): nazwa i nagłówek wchodzą DOPIERO,
+    // gdy zasłona zaczyna schodzić — inaczej cała kaskada zagrałaby pod nią.
+    if (html.classList.contains('intro-on')) {
+      document.addEventListener('wejscie:koniec', wejdz);
+      setTimeout(function () { bm.classList.add('bm-in'); }, 3200);
+      return;
+    }
+    wejdz();
     // Bezpiecznik czasowy: gdyby przejście nie wystartowało (np. karta w tle przy wejściu),
     // po sekundzie i tak odsłaniamy treść — nikt nigdy nie zobaczy pustego hero.
     setTimeout(function () { bm.classList.add('bm-in'); }, 1000);

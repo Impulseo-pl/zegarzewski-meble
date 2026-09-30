@@ -18,16 +18,32 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "HomeAndConstructionBusiness", "name": "Zegarzewski Meble", "url": "https://kris20032.github.io/zegarzewski-meble/", "telephone": "+48512578182", "image": "https://kris20032.github.io/zegarzewski-meble/img/og.jpg", "areaServed": "Nowogród", "sameAs": ["https://maps.google.com/?cid=5291155872553518515&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA", "https://www.facebook.com/zegarzewskimeble/?locale=pl_PL", "https://www.tiktok.com/@zegarzewski.meble"]}</script>
+<link rel="preload" as="image" href="img/logo.png" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=4a0e42c2">
+<link rel="stylesheet" href="assets/styles.css?v=7747ebe2">
+<script>
+/* WEJSCIE (kurtyna z logo) - skrypt ZAPALAJACY, w <head> BEZ defer:
+   z defer przez ulamek sekundy widac strone, a dopiero potem zaslone. */
+(function(){
+  try{
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    if (location.search.indexOf('intro') < 0) {
+      try { if (sessionStorage.getItem('zegarzewski-intro')) return;
+            sessionStorage.setItem('zegarzewski-intro','1'); } catch(e){}
+    }
+    document.documentElement.classList.add('intro-on','bez-wejscia-tla');
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><span class="i-kreska"></span></div>
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand brand-has-logo" href="index.html"><img class="brand-logo" src="img/logo.jpg" alt="Zegarzewski Meble" width="720" height="720" decoding="async"></a>
+    <a class="brand brand-has-logo" href="index.html"><img class="brand-logo" src="img/logo.png" alt="Zegarzewski Meble" width="2016" height="1194" fetchpriority="high"></a>
     <nav class="nav-links">
       <a href="index.html" class="active" aria-current="page">Strona główna</a>
       <a href="realizacje.html">Realizacje</a>
@@ -39,6 +55,101 @@
     <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </header>
+<script>
+/* WEJSCIE - pomiar i sterowanie, TUZ ZA </header> (z main.js ruszaloby ~300 ms pozniej). */
+(function(){
+  var h = document.documentElement;
+  if (!h.classList.contains('intro-on')) return;
+  var brand = document.querySelector('.brand'),
+      logo  = document.querySelector('.brand-logo'),
+      nav   = document.querySelector('.nav');
+  var wyslane = false;
+  /* Tekst hero (main.js) czeka na ten sygnal, zeby wejsc DOPIERO po zdjeciu zaslony. */
+  function sygnal(){
+    if (wyslane) return; wyslane = true;
+    try { document.dispatchEvent(new CustomEvent('wejscie:koniec')); } catch(e){}
+  }
+  function sprzataj(){ h.classList.remove('intro-on','intro-znak','intro-gra','intro-out'); sygnal(); }
+  if (!brand || !logo || !nav) { sprzataj(); return; }
+
+  /* NIC nie rusza, dopoki LOGO nie jest POBRANE I ZDEKODOWANE - inaczej takt
+     wylaniania gra na pustym miejscu. Nie doczekamy sie w CZEKANIE ms - bez wejscia. */
+  var CZEKANIE = 1400, ruszylo = false, odpuszczone = false;
+  function pobrane(){ return logo.complete && logo.naturalWidth > 0; }
+  function odpusc(){ if (ruszylo || odpuszczone) return; odpuszczone = true; sprzataj(); }
+  function zacznij(){
+    if (ruszylo || odpuszczone) return;
+    if (logo.decode) { logo.decode().then(graj, graj); } else graj();
+  }
+  function graj(){ if (!ruszylo && !odpuszczone) { ruszylo = true; wejscie(); } }
+  if (pobrane()) zacznij();
+  else {
+    logo.addEventListener('load', zacznij);
+    logo.addEventListener('error', odpusc);
+    setTimeout(function(){ if (pobrane()) zacznij(); else odpusc(); }, CZEKANIE);
+  }
+
+  function wejscie(){
+  var r = logo.getBoundingClientRect(), nr = nav.getBoundingClientRect(),
+      br = brand.getBoundingClientRect();
+  if (!r.width || !r.height) { sprzataj(); return; }
+
+  /* Sufit z PIKSELI PLIKU (2016) podzielonych przez gestosc ekranu - logo na
+     kurtynie nigdy nie jest powiekszane ponad to, co ma plik. */
+  var sufit = 2016 / Math.min(window.devicePixelRatio || 1, 3);
+  var cel = (innerWidth < 680) ? Math.min(innerWidth * 0.66, 300)
+                               : Math.min(innerWidth * 0.36, 420);
+  cel = Math.max(r.width, Math.min(cel, sufit));
+  h.style.setProperty('--i-w', Math.round(cel) + 'px');
+  h.style.setProperty('--i-h', Math.round(cel * r.height / r.width) + 'px');
+  h.style.setProperty('--i-zmniejsz', (r.width / cel).toFixed(4));
+  /* Obraz wychodzi z ukladu, wiec `.brand` trzyma jego miejsce (pasek nie podskakuje). */
+  h.style.setProperty('--i-baza-w', Math.round(br.width) + 'px');
+  h.style.setProperty('--i-baza-h', Math.round(br.height) + 'px');
+  /* `.nav` jest blokiem odniesienia - srodek ekranu liczymy wzgledem paska. */
+  h.style.setProperty('--i-cx', Math.round(innerWidth / 2 - nr.left) + 'px');
+  h.style.setProperty('--i-cy', Math.round(innerHeight / 2 - nr.top) + 'px');
+  h.style.setProperty('--i-px', Math.round(r.left + r.width / 2 - innerWidth / 2) + 'px');
+  h.style.setProperty('--i-py', Math.round(r.top + r.height / 2 - innerHeight / 2) + 'px');
+  h.classList.add('intro-znak');
+
+  var zdjete = false;
+  function koniec(){
+    if (zdjete) return; zdjete = true;
+    h.classList.add('intro-out');
+    sygnal();
+    setTimeout(sprzataj, 950);
+  }
+
+  /* DWIE klatki: po jednej przegladarka sklei stan startowy z koncowym. */
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    h.classList.add('intro-gra');
+    /* Zaslona schodzi, gdy gotowe jest HERO - nie po sztywnym timerze i nie po window.load. */
+    var start = Date.now(), MIN = 640, SUFIT = 940, zaladowane = false, hero = null;
+    function heroGotowe(){
+      if (!hero) hero = document.querySelector('.hero-cine img');
+      return !!(hero && hero.complete && hero.naturalWidth > 0);
+    }
+    function moze(){
+      if (zdjete) return;
+      if (Date.now() - start >= MIN && (heroGotowe() || zaladowane)) koniec();
+      else setTimeout(moze, 70);
+    }
+    window.addEventListener('load', function(){ zaladowane = true; moze(); });
+    moze();
+    setTimeout(koniec, SUFIT);
+  }); });
+
+  /* Bezpieczniki niezalezne od klatek (karta w tle wstrzymuje rAF),
+     liczone od STARTU animacji. */
+  setTimeout(koniec, 1900);
+  setTimeout(sprzataj, 3000);
+  ['click','wheel','touchstart','keydown'].forEach(function(z){
+    window.addEventListener(z, koniec, {passive:true});
+  });
+  }
+})();
+</script>
 
 <main>
 <section class="hero-cine">
@@ -181,6 +292,6 @@
 <div class="sticky-reserve"><a class="sr-book" href="kontakt.html">Zapytaj o wycenę</a><a class="sr-call" href="tel:+48512578182" aria-label="Zadzwoń"><svg class="ico-tel" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.58 3.6a1 1 0 0 1-.25 1l-2.23 2.2Z" fill="currentColor"/></svg></a></div>
 <div class="demo-wazne" data-do="2026-10-06" data-cykl="3" hidden><svg class="dw-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.2V12l3.3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="dw-txt"></span></div>
 
-<script src="assets/main.js"></script>
+<script src="assets/main.js?v=7747ebe2"></script>
 </body>
 </html>
